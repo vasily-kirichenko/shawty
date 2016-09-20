@@ -5,6 +5,7 @@ module Main where
 import           Control.Monad          (replicateM)
 import           Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Char8  as BC
+import           Data.Maybe             (isJust)
 import           Data.Text.Encoding     (decodeUtf8, encodeUtf8)
 import qualified Data.Text.Lazy         as TL
 import qualified Database.Redis         as R
@@ -24,12 +25,14 @@ randomElement xs = do
 shortyGen :: IO String
 shortyGen = replicateM 7 (randomElement alphaNum)
 
-saveURI :: R.Connection -> BC.ByteString -> BC.ByteString
+type ShortURI = BC.ByteString
+type FullURI = BC.ByteString
+
+saveURI :: R.Connection -> ShortURI -> FullURI
         -> IO (Either R.Reply R.Status)
 saveURI conn shortURI uri = R.runRedis conn $ R.set shortURI uri
 
-getURI :: R.Connection -> BC.ByteString
-       -> IO (Either R.Reply (Maybe BC.ByteString))
+getURI :: R.Connection -> ShortURI -> IO (Either R.Reply (Maybe FullURI))
 getURI conn shortURI = R.runRedis conn $ R.get shortURI
 
 linkShorty :: String -> String
@@ -50,28 +53,37 @@ shortyFound tbs = TL.concat ["<a href=\"", tbs, "\">", tbs, "</a>"]
 
 app :: R.Connection -> ScottyM ()
 app rConn = do
+
   get "/" $ do
     uri <- param "uri"
-    let parsedUri :: Maybe URI
-        parsedUri = parseURI (TL.unpack uri)
-    case parsedUri of
-      Just _ -> do
+    let parsedUri = parseURI . TL.unpack $ uri
+    if isJust parsedUri then do
         shawty <- liftIO shortyGen
         let shorty = BC.pack shawty
-            uri' = encodeUtf8 (TL.toStrict uri)
-        resp <- liftIO (saveURI rConn shorty uri')
-        html (shortyCreated resp shawty)
-      Nothing -> text (shortyAintUri uri)
+        existingUri <- liftIO (getURI rConn shorty)
+        case existingUri of
+          Left reply -> text . TL.pack . show $ reply
+          Right (Just shortURI) ->
+            text . TL.pack $
+              "Short URI " ++
+              BC.unpack shortURI ++
+              " has already been used."
+          Right _ -> do
+            let uri' = encodeUtf8 (TL.toStrict uri)
+            resp <- liftIO (saveURI rConn shorty uri')
+            html (shortyCreated resp shawty)
+    else text (shortyAintUri uri)
+
   get "/:short" $ do
     short <- param "short"
     uri <- liftIO (getURI rConn short)
     case uri of
-      Left reply -> text (TL.pack (show reply))
+      Left reply -> text . TL.pack . show $ reply
       Right mbBS -> case mbBS of
         Nothing -> text "uri not found"
         Just bs -> html (shortyFound tbs)
-          where tbs :: TL.Text
-                tbs = TL.fromStrict (decodeUtf8 bs)
+          where
+            tbs = TL.fromStrict (decodeUtf8 bs)
 
 
 

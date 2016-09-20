@@ -1,11 +1,11 @@
 
 ==================== FINAL INTERFACE ====================
-2016-09-20 13:05:55.9667089 UTC
+2016-09-20 13:57:10.3914155 UTC
 
 interface main@main:Main 7103
-  interface hash: 81c225650b2a581ee90a87af994ce1cd
-  ABI hash: f294e24bf5da193bb0e05bcb826641f3
-  export-list hash: 61b6b830f686664a013c9924c3715736
+  interface hash: 2b8a4d2f3005879c92cdf156d744b681
+  ABI hash: 6738d34e4376a7f0a37760f55cf9e867
+  export-list hash: 80d754baf67168e573c9702af62a300f
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 73e1e4d5dc866607643e32359a02755d
   sig of: Nothing
@@ -23,6 +23,8 @@ exports:
   Main.shortyCreated
   Main.shortyFound
   Main.shortyGen
+  Main.FullURI
+  Main.ShortURI
 module dependencies:
 package dependencies: BoundedChan-1.0.3.0@Bound_HnqSdFZoJFd98LdPAn4J2A
                       Win32-2.3.1.0@Win32_ELFLzTRksT8Dql3wobiWvb
@@ -144,6 +146,7 @@ family instance modules: attoparsec-0.13.0.2@attop_F2JR8EcnzjH8eSBi5YocsE:Data.A
 import  -/  base-4.8.2.0:Control.Monad 480c5067477275068c9b98be08410df9
 import  -/  base-4.8.2.0:Data.Either e8724afd65fd432cfe9a54014f5f762d
 import  -/  base-4.8.2.0:Data.Foldable 2ce969969ad5231eb40bd713f94f05ad
+import  -/  base-4.8.2.0:Data.Maybe 1cb58de2b04ee3c0c0a7dc9201184aff
 import  -/  base-4.8.2.0:GHC.Base a4939789b2cfd60b36ed163e56a623cd
 import  -/  base-4.8.2.0:GHC.List 0c736920522bbd14b770342776012ab6
 import  -/  base-4.8.2.0:GHC.Num 9f42750c866f5832ca565146bd660c60
@@ -167,6 +170,10 @@ import  -/  transformers-0.4.2.0@trans_GZTjP9K5WFq01xC9BAGQpF:Control.Monad.IO.C
 047efdc6b35ab6cd19c20ef4b6973a0e
   $wxs :: GHC.Prim.Int# -> [GHC.Types.IO GHC.Types.Char]
   {- Arity: 1, Strictness: <S,1*U>, Inline: [0] -}
+899331d7335d0cb9c24dc41da8a80056
+  type FullURI = Data.ByteString.Internal.ByteString
+b7d5af3919b1e2d0343e7c2a8c68f0ac
+  type ShortURI = Data.ByteString.Internal.ByteString
 c6194020e52cada195895ed58ce7522b
   alphaNum :: GHC.Base.String
   {- Unfolding: (Main.alphaNum_go 65) -}
@@ -177,29 +184,28 @@ b3d1f3702d1c3fb2e36569c48437b331
   app :: Database.Redis.Core.Connection -> Web.Scotty.ScottyM ()
   {- Arity: 1,
      Strictness: <L,U(C(U),C(C1(U)),U(U),A,U(U),U(U,U,U),A)> -}
-3b8433f2c9490287f07882153d69382e
+073cfdd8472d8dd9e8550df08bf59f93
   getURI ::
     Database.Redis.Core.Connection
-    -> Data.ByteString.Internal.ByteString
+    -> Main.ShortURI
     -> GHC.Types.IO
          (Data.Either.Either
-            Database.Redis.Protocol.Reply
-            (GHC.Base.Maybe Data.ByteString.Internal.ByteString))
+            Database.Redis.Protocol.Reply (GHC.Base.Maybe Main.FullURI))
   {- Arity: 3,
      Strictness: <L,U(C(U),C(C1(U)),U(U),A,U(U),U(U,U,U),A)><L,U><L,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.getURI1
                   `cast`
                 (<Database.Redis.Core.Connection>_R
-                 ->_R <Data.ByteString.Internal.ByteString>_R
+                 ->_R <Main.ShortURI>_R
                  ->_R Sym (GHC.Types.NTCo:IO[0]
                                <Data.Either.Either
                                   Database.Redis.Protocol.Reply
                                   (GHC.Base.Maybe Data.ByteString.Internal.ByteString)>_R)) -}
-75090111cdc8668653af0521516a56e5
+b739b8acbf640bb19744d9dcc6b66911
   getURI1 ::
     Database.Redis.Core.Connection
-    -> Data.ByteString.Internal.ByteString
+    -> Main.ShortURI
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld,
           Data.Either.Either
@@ -208,7 +214,7 @@ b3d1f3702d1c3fb2e36569c48437b331
   {- Arity: 3,
      Strictness: <L,U(C(U),C(C1(U)),U(U),A,U(U),U(U,U,U),A)><L,U><L,U>,
      Unfolding: (\ conn :: Database.Redis.Core.Connection
-                   shortURI :: Data.ByteString.Internal.ByteString
+                   shortURI :: Main.ShortURI
                    eta :: GHC.Prim.State# GHC.Prim.RealWorld[OneShot] ->
                  Data.Pool.withResource1
                    @ (Database.Redis.ProtocolPipelining.Connection
@@ -400,11 +406,11 @@ e269574732de6f2d4c5e56467f536842
 99bdbb24ef0ce29dbb58ae44281bae30
   randomElement2 :: GHC.Types.Int
   {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0) -}
-5d2ec7fc27f79b2d001185f611215a1d
+97b9868c4d2c16fc9acb282f8d34537f
   saveURI ::
     Database.Redis.Core.Connection
-    -> Data.ByteString.Internal.ByteString
-    -> Data.ByteString.Internal.ByteString
+    -> Main.ShortURI
+    -> Main.FullURI
     -> GHC.Types.IO
          (Data.Either.Either
             Database.Redis.Protocol.Reply Database.Redis.Types.Status)
@@ -414,16 +420,16 @@ e269574732de6f2d4c5e56467f536842
                 Main.saveURI1
                   `cast`
                 (<Database.Redis.Core.Connection>_R
-                 ->_R <Data.ByteString.Internal.ByteString>_R
-                 ->_R <Data.ByteString.Internal.ByteString>_R
+                 ->_R <Main.ShortURI>_R
+                 ->_R <Main.FullURI>_R
                  ->_R Sym (GHC.Types.NTCo:IO[0]
                                <Data.Either.Either
                                   Database.Redis.Protocol.Reply Database.Redis.Types.Status>_R)) -}
-17f0a4dacbc840f4357bb47817a9e656
+12b14db9ca419f5a21ccadb0ac2309b0
   saveURI1 ::
     Database.Redis.Core.Connection
-    -> Data.ByteString.Internal.ByteString
-    -> Data.ByteString.Internal.ByteString
+    -> Main.ShortURI
+    -> Main.FullURI
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld,
           Data.Either.Either
@@ -431,8 +437,8 @@ e269574732de6f2d4c5e56467f536842
   {- Arity: 4,
      Strictness: <L,U(C(U),C(C1(U)),U(U),A,U(U),U(U,U,U),A)><L,U><L,U><L,U>,
      Unfolding: (\ conn :: Database.Redis.Core.Connection
-                   shortURI :: Data.ByteString.Internal.ByteString
-                   uri :: Data.ByteString.Internal.ByteString
+                   shortURI :: Main.ShortURI
+                   uri :: Main.FullURI
                    eta :: GHC.Prim.State# GHC.Prim.RealWorld[OneShot] ->
                  Data.Pool.withResource1
                    @ (Database.Redis.ProtocolPipelining.Connection
