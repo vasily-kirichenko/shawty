@@ -4,6 +4,7 @@ module Main where
 
 import           Control.Monad          (replicateM)
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Reader
 import qualified Data.ByteString.Char8  as BC
 import           Data.Maybe             (isJust)
 import           Data.Text.Encoding     (decodeUtf8, encodeUtf8)
@@ -28,12 +29,11 @@ shortyGen = replicateM 7 (randomElement alphaNum)
 type ShortURI = BC.ByteString
 type FullURI = BC.ByteString
 
-saveURI :: R.Connection -> ShortURI -> FullURI
-        -> IO (Either R.Reply R.Status)
-saveURI conn shortURI uri = R.runRedis conn $ R.set shortURI uri
+saveURI :: Reader R.Connection (ShortURI -> FullURI) IO (Either R.Reply R.Status))
+saveURI shortURI uri = R.runRedis $ R.set shortURI uri
 
-getURI :: R.Connection -> ShortURI -> IO (Either R.Reply (Maybe FullURI))
-getURI conn shortURI = R.runRedis conn $ R.get shortURI
+getURI :: Reader R.Connection ShortURI (IO (Either R.Reply (Maybe FullURI)))
+getURI shortURI = R.runRedis $ R.get shortURI
 
 linkShorty :: String -> String
 linkShorty shorty =
@@ -51,8 +51,8 @@ shortyAintUri uri =
 shortyFound :: TL.Text -> TL.Text
 shortyFound tbs = TL.concat ["<a href=\"", tbs, "\">", tbs, "</a>"]
 
-app :: R.Connection -> ScottyM ()
-app rConn = do
+app :: ReaderT R.Connection ScottyM ()
+app = do
 
   get "/" $ do
     uri <- param "uri"
@@ -60,7 +60,7 @@ app rConn = do
     if isJust parsedUri then do
         shawty <- liftIO shortyGen
         let shorty = BC.pack shawty
-        existingUri <- liftIO (getURI rConn shorty)
+        existingUri <- liftIO (getURI shorty)
         case existingUri of
           Left reply -> text . TL.pack . show $ reply
           Right (Just shortURI) ->
@@ -70,13 +70,13 @@ app rConn = do
               " has already been used."
           Right _ -> do
             let uri' = encodeUtf8 (TL.toStrict uri)
-            resp <- liftIO (saveURI rConn shorty uri')
+            resp <- liftIO (saveURI shorty uri')
             html (shortyCreated resp shawty)
     else text (shortyAintUri uri)
 
   get "/:short" $ do
     short <- param "short"
-    uri <- liftIO (getURI rConn short)
+    uri <- liftIO (getURI short)
     case uri of
       Left reply -> text . TL.pack . show $ reply
       Right mbBS -> case mbBS of
